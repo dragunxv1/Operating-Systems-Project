@@ -6,11 +6,12 @@ typedef struct GPS{
 }GPS;
 
 typedef struct Treasure{
+    char userName[treasureTXT];
+    char clue[treasureTXT];
     GPS gps;
     int ID;
     int value;
-    char userName[treasureTXT];
-    char clue[treasureTXT];
 }Treasure;
 
 void treasurePrint(Treasure x);
+int determineOperation(char *operation);
