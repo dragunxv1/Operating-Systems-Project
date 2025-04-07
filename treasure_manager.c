@@ -5,38 +5,71 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <errno.h>
+#include <unistd.h>
+#include <time.h>
 #include "treasure.h"
 
 
 
 int main(int argc, char **argv){
-    char *operation = (char*)malloc(strlen(argv[1]) + 1);
-    strncpy(operation, argv[1], strlen(argv[1]));
-    operation[strlen(argv[1])] = 0;
+    int opt = determineOperation(argv[1]);
 
-    char *huntID = (char*)malloc(strlen(argv[2]) + 1);
-    strncpy(huntID, argv[2], strlen(argv[2]));
-    huntID[strlen(argv[2])] = 0;
+    mkdir(argv[2], 0777);
 
-    int opt = determineOperation(operation);
+    char *dataPath = dataFilepath(argv[2]);
+    int dataFile = open(dataPath, O_RDWR | O_CREAT | O_APPEND , S_IRUSR | S_IWUSR);
+    if(dataFile == -1){
+        perror("Data File Open Error:");
+        close(dataFile);
+        free(dataPath);
+        exit(-1);
+    }
 
-
+    char *logPath = logFilepath(argv[2]);
+    int logFile = open(logPath, O_RDWR | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
+    if(logFile == -1){
+        perror("Log File Open Error:");
+        close(dataFile);
+        close(logFile);
+        free(dataPath);
+        free(logPath);
+        exit(-1);
+    }
 
     switch(opt){
         case 1:
-            DIR *dir = opendir(huntID);
-            if(dir == NULL){
-                mkdir(huntID, 0777);
-                DIR *dir = opendir(huntID);
+            Treasure tr = {0};
+            tr = treasureRead(tr);
+            
+            write(dataFile, &tr, sizeof(Treasure));
+           
+            char log[100] = {0};
+            time_t NOW = time(0);
+            struct tm *time_info = localtime(&NOW);
+            strftime(log, sizeof(log), "%Y-%m-%d %H:%M:%S", time_info);
+
+            char message[100] = {0};
+            sprintf(message," User named %s added the treasure with ID:%d \n",tr.userName, tr.ID);
+
+
+            write(logFile, &log, strlen(log));
+            write(logFile, &message, strlen(message));
+            break;
+
+        case 2:
+            printf("Hunt name: %s\n", argv[2]);
+            Treasure list[MAX];
+            int treasureCounter = 0;
+            while(read(dataFile, &list[treasureCounter], sizeof(Treasure)) != 0){
+                treasureCounter++;
+            }
+            printf("Total treasures: %d\nTotal file size %ld BYTES\n", treasureCounter, sizeof(Treasure) * treasureCounter);
+
+            for(int i = 0; i<treasureCounter; i++){
+                treasurePrint(list[i]);
             }
 
-            char pathname[50];
-
-
-            closedir(dir);
-            break;
-        case 2:
-            printf("LIST");
             break;
         case 3:
             printf("VIEW");
@@ -57,7 +90,11 @@ int main(int argc, char **argv){
             printf("--remove_hunt <hunt_id> (remove an entire hunt)\n");
     }
 
-    free(operation);
-    free(huntID);
+
+    close(dataFile);
+    close(logFile);
+    free(dataPath);
+    free(logPath);
+
     return 0;
 }
