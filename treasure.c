@@ -8,70 +8,57 @@
 #include <errno.h>
 
 void clearInputBuffer() {
-    while (getchar() != '\n');
+    int c = 0;
+    while ((c = getchar()) != '\n' && c!= EOF);
 }
 
-Treasure treasureRead(Treasure tres){
+Treasure treasureRead(Treasure tres) {
+    char buffer[100];
 
-    int validInput = 0;
-    printf("ID:");
-    while(validInput != 1){
-        if(scanf("%d", &tres.ID) == 1){
-            validInput = 1;
-        }else{
-            printf("Invalid Input for ID - Integer Required\n");
-            printf("ID:");
-            clearInputBuffer();
-        }
+    while(1){
+        printf("ID: ");
+        fgets(buffer, sizeof(buffer), stdin);
+        if (sscanf(buffer, "%d", &tres.ID) == 1) break;
+        printf("Invalid Input for ID - Integer Required\n");
     }
 
-    printf("User Name:");
+    printf("User Name: ");
     fgets(tres.userName, treasureTXT, stdin);
-    tres.userName[strcspn(tres.userName, "\n")] = '\0';
-    clearInputBuffer();
-
-    validInput = 0;
-    printf("Value:");
-    while(validInput != 1){
-        if(scanf("%d", &tres.value) == 1){
-            validInput = 1;
-        }else{
-            printf("Invalid Input for Value - Integer Required\n");
-            printf("Value:");
-            clearInputBuffer();
-        }
+    if (tres.userName[strlen(tres.userName) - 1] != '\n') {
+        clearInputBuffer(); 
+    } else {
+        tres.userName[strcspn(tres.userName, "\n")] = '\0';
     }
 
-    printf("Clue:");
+    while(1){
+        printf("Value: ");
+        fgets(buffer, sizeof(buffer), stdin);
+        if (sscanf(buffer, "%d", &tres.value) == 1) break;
+        printf("Invalid Input for Value - Integer Required\n");
+    }
+
+    printf("Clue: ");
     fgets(tres.clue, treasureTXT, stdin);
-    tres.clue[strcspn(tres.clue, "\n")] = '\0';
-    clearInputBuffer();
-   
-
-    validInput = 0;
-    printf("X Coordinates:");
-    while(validInput != 1){
-        if(scanf("%f", &tres.gps.x) == 1){
-            validInput = 1;
-        }else{
-            printf("Invalid Input for Coordinates - Float Required\n");
-            printf("X Coordinates:");
-            clearInputBuffer();
-        }
+    if (tres.clue[strlen(tres.clue) - 1] != '\n') {
+        clearInputBuffer(); 
+    } else {
+        tres.clue[strcspn(tres.clue, "\n")] = '\0';
     }
 
-    validInput = 0;
-    printf("Y Coordinates:");
-    while(validInput != 1){
-        if(scanf("%f", &tres.gps.y) == 1){
-            validInput = 1;
-        }else{
-            printf("Invalid Input for Coordinates - Float Required\n");
-            printf("Y Coordinates:");
-            clearInputBuffer();
-        }
+    while(1){
+        printf("X Coordinates: ");
+        fgets(buffer, sizeof(buffer), stdin);
+        if (sscanf(buffer, "%f", &tres.gps.x) == 1) break;
+        printf("Invalid Input for Coordinates - Float Required\n");
     }
-    
+
+    while(1){
+        printf("Y Coordinates: ");
+        fgets(buffer, sizeof(buffer), stdin);
+        if (sscanf(buffer, "%f", &tres.gps.y) == 1) break;
+        printf("Invalid Input for Coordinates - Float Required\n");
+    }
+
     return tres;
 }
 
