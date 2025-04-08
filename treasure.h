@@ -19,3 +19,5 @@ int determineOperation(char *operation);
 char* dataFilepath(char *hunt);
 char* logFilepath(char *hunt);
 Treasure treasureRead(Treasure x);
+void addTreasure(char *hunt);
+void listTreasures(char *hunt);
