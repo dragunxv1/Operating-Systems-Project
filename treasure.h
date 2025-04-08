@@ -20,4 +20,7 @@ char* dataFilepath(char *hunt);
 char* logFilepath(char *hunt);
 Treasure treasureRead(Treasure x);
 void addTreasure(char *hunt);
+void addLog(char *hunt, char *message);
 void listTreasures(char *hunt);
+void viewTreasure(char *hunt, char *treasure);
+void removeTreasure(char *hunt, char*treasure);

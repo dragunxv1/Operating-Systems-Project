@@ -145,7 +145,13 @@ void addTreasure(char *hunt){
     close(dataFile);
     free(dataPath);
 
+    char message[100] = {0};
+    sprintf(message," HUNT %s : A treasure was added with ID:%d\n",hunt ,tr.ID);
 
+    addLog(hunt, message);
+}
+
+void addLog(char *hunt, char *mess){
     char *logPath = logFilepath(hunt);
     int logFile = open(logPath, O_RDWR | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
     if(logFile == -1){
@@ -154,14 +160,14 @@ void addTreasure(char *hunt){
         free(logPath);
         exit(-1);
     }
-   
+
     char log[100] = {0};
     time_t NOW = time(0);
     struct tm *time_info = localtime(&NOW);
     strftime(log, sizeof(log), "%Y-%m-%d %H:%M:%S", time_info);
 
     char message[100] = {0};
-    sprintf(message," User named %s added the treasure with ID:%d \n",tr.userName, tr.ID);
+    strcpy(message, mess);
 
     write(logFile, &log, strlen(log));
     write(logFile, &message, strlen(message));
@@ -197,6 +203,10 @@ char *lastLog(char *hunt){
     read(logFile, &buf, MAX);
 
     char *last = (char*)malloc(strlen(buf)+1);
+    if(last == NULL){
+        printf("malloc error");
+        exit(-1);
+    }
     strcpy(last, buf);
     last[strlen(last)-1] = '\0';
 
@@ -246,5 +256,70 @@ void listTreasures(char *hunt){
     free(dataPath);
     close(dataFile);
     free(log);
+
+    char message[100] = {0};
+    sprintf(message,"  All treasures were listed\n");
+
+    addLog(hunt, message);
 }
 
+void viewTreasure(char *hunt, char *treasure){
+    char *dataPath = dataFilepath(hunt);
+    int dataFile = open(dataPath, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if(dataFile == -1){
+        perror("Data File Open Error:");
+        close(dataFile);
+        free(dataPath);
+        exit(-1);
+    }
+    
+    int bytesRead = 0;
+    Treasure tr = {0};
+    int ID = 0;
+    int tresID = 0;
+    if(sscanf(treasure, "%d", &ID) != 1){
+        printf("Invalid treasure ID\n");
+        exit(-1);
+    }
+    off_t offset = sizeof(tr.userName) + sizeof(tr.clue) + sizeof(tr.gps);
+    off_t offsecond = offset;
+
+    while(1){
+        lseek(dataFile, offset, SEEK_SET);
+        bytesRead = read(dataFile, &tresID, sizeof(int));
+        if(bytesRead == 0){
+            printf("HuntName: %s\n", hunt);
+            printf("This treasure doesn't exist in this hunt.\n");
+            free(dataPath);
+            close(dataFile);
+            exit(-1);
+        }
+
+        if(ID == tresID){
+            lseek(dataFile, offset-offsecond, SEEK_SET);
+            read(dataFile, &tr.userName, sizeof(tr.userName));
+            read(dataFile, &tr.clue, sizeof(tr.clue));
+            read(dataFile, &tr.gps.x, sizeof(float));
+            read(dataFile, &tr.gps.y, sizeof(float));
+            read(dataFile, &tr.ID, sizeof(int));
+            read(dataFile, &tr.value, sizeof(int));
+            break;
+        }
+
+        offset = offset + sizeof(Treasure);
+    }
+    printf("HuntName: %s\n", hunt);
+    treasurePrint(tr);
+
+    char message[100] = {0};
+    sprintf(message," HUNT %s : Treasure with ID %d was listed.\n", hunt, tr.ID);
+
+    addLog(hunt, message);
+
+    free(dataPath);
+    close(dataFile);
+}
+
+void removeTreasure(char *hunt, char*treasure){
+
+}

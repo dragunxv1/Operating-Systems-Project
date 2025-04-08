@@ -20,10 +20,10 @@ int main(int argc, char **argv){
             listTreasures(argv[2]);
             break;
         case 3:
-            printf("VIEW");
+            viewTreasure(argv[2], argv[3]);
             break;
         case 4:
-            printf("REMOVE");
+            removeTreasure(argv[2], argv[3]);
             break;
         case 5:
             printf("REMOVEF");
