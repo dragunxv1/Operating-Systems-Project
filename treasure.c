@@ -146,7 +146,7 @@ void addTreasure(char *hunt){
     free(dataPath);
 
     char message[100] = {0};
-    sprintf(message," HUNT %s : A treasure was added with ID:%d\n",hunt ,tr.ID);
+    sprintf(message,"  Treasure with ID %d was added.\n", tr.ID);
 
     addLog(hunt, message);
 }
@@ -321,5 +321,61 @@ void viewTreasure(char *hunt, char *treasure){
 }
 
 void removeTreasure(char *hunt, char*treasure){
+    char *dataPath = dataFilepath(hunt);
+    int dataFile = open(dataPath, O_RDWR);
+    if(dataFile == -1){
+        perror("Data File Open Error:");
+        close(dataFile);
+        free(dataPath);
+        exit(-1);
+    }
 
+    Treasure list[MAX];
+    int index = 0;
+    int x = 0;
+    while(1){   
+        x = read(dataFile, &list[index], sizeof(Treasure));
+        if(x == 0){
+            break;
+        }
+        index++;
+    }
+
+    close(dataFile);
+
+    dataFile = open(dataPath, O_RDWR | O_TRUNC);
+    if(dataFile == -1){
+        perror("Data File Open Error:");
+        close(dataFile);
+        free(dataPath);
+        exit(-1);
+    }
+
+    int ID = 0;
+    if(sscanf(treasure, "%d", &ID) != 1){
+        printf("Invalid treasure ID\n");
+        exit(-1);
+    }
+    for(int i = 0; i<index; i++){
+        if(list[i].ID == ID){
+            for(int j = i; j<index; j++){
+                list[j] = list[j+1];
+            }
+            index--;
+            break;
+        }
+    }
+
+    lseek(dataFile, 0, SEEK_SET);
+    for(int i = 0; i<index; i++){
+        write(dataFile, &list[i], sizeof(Treasure));
+    }
+
+    free(dataPath);
+    close(dataFile);
+
+    char message[100] = {0};
+    sprintf(message,"  Treasure with ID %d was deleted.\n", ID);
+
+    addLog(hunt, message);
 }
