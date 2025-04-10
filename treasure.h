@@ -1,6 +1,7 @@
 #define treasureTXT 50
 #define MAX 100
 #define pathMAX 1000
+#define allocBUF 20
 
 typedef struct GPS{
     float x;

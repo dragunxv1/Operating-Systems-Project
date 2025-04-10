@@ -65,26 +65,34 @@ Treasure treasureRead(Treasure tres) {
 }
 
 char* dataFilepath(char *hunt){
-    char *filepath = (char*)calloc((strlen(hunt) + 20), sizeof(char));
+    char buf[MAX] = {0};
+    strncpy(buf,hunt, MAX-allocBUF);
+    strcat(buf, "/");
+    strcat(buf, "data.bin");
+
+    char *filepath = (char*)calloc(strlen(buf)+1, sizeof(char));
     if(filepath == NULL){
         perror("Memory Alloc Error:");
         exit(-1);
     }
-    strcat(filepath, hunt);
-    strcat(filepath,"/");
-    strcat(filepath,"data.bin");
+    
+    strcpy(filepath, buf);
     return filepath;    
 }
 
 char* logFilepath(char *hunt){
-    char *filepath = (char*)calloc((strlen(hunt) + 20), sizeof(char));
+    char buf[MAX] = {0};
+    strncpy(buf,hunt, MAX-allocBUF);
+    strcat(buf, "/");
+    strcat(buf, "logged_hunt.txt");
+
+    char *filepath = (char*)calloc(strlen(buf)+1, sizeof(char));
     if(filepath == NULL){
         perror("Memory Alloc Error:");
         exit(-1);
     }
-    strcat(filepath, hunt);
-    strcat(filepath,"/");
-    strcat(filepath,"logged_hunt.txt");
+    
+    strcpy(filepath, buf);
     return filepath;    
 }
 
@@ -172,6 +180,23 @@ void addTreasure(char *hunt){
     addLog(hunt, message);
 }
 
+char *linkPath(char *hunt){
+    char buf[MAX] = {0};
+    strcpy(buf, "logged_hunt-");
+    strncat(buf, hunt, MAX-allocBUF);
+    strcat(buf,".txt");
+
+    char *logLink = (char*)calloc(strlen(buf)+1, sizeof(char));
+    if(logLink == NULL){
+        perror("Memory Alloc Error :");
+        exit(-1);
+    }
+
+    strncpy(logLink, buf, strlen(buf));
+
+    return logLink;
+}
+
 void addLog(char *hunt, char *mess){
     char *logPath = logFilepath(hunt);
     int logFile = open(logPath, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
@@ -205,6 +230,17 @@ void addLog(char *hunt, char *mess){
     }
 
 
+    struct stat buff;
+    char *logLink = linkPath(hunt);
+
+    if(stat(logLink, &buff) != 0){
+        if(symlink(logPath, logLink) == -1){
+            perror("Symlink error :");
+            exit(-1);
+        }
+    }
+
+    free(logLink);
     free(logPath);
 }
 
@@ -464,7 +500,7 @@ void removeTreasure(char *hunt, char*treasure){
 void removeHunt(char *hunt){
     DIR *directory = opendir(hunt);
     if(directory == NULL){
-        perror("Opendir Error:");
+        perror("Hunt not found :");
         exit(-1);
     }
 
@@ -500,4 +536,9 @@ void removeHunt(char *hunt){
         perror("File remove error :");
         exit(-1);
     }
+
+    char *logLink = linkPath(hunt);
+
+    remove(logLink);
+    free(logLink);
 }
