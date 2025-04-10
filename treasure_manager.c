@@ -1,32 +1,55 @@
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <unistd.h>
 #include "treasure.h"
 
 int main(int argc, char **argv){
-    int opt = determineOperation(argv[1]);
+    int opt = Operation(argv[1]);
 
 
     switch(opt){
         case 1:
-            addTreasure(argv[2]);
+            if(argv[2] != NULL){
+                addTreasure(argv[2]);
+            }
+            else{
+                printf("Missing argument(s).\n");
+                printf("Try: --add <hunt_id>\n");
+            }   
             break;
         case 2:
-            listTreasures(argv[2]);
+            if(argv[2] != NULL){
+                listTreasures(argv[2]);
+            }
+            else{
+                printf("Missing argument(s).\n");
+                printf("Try: --list <hunt_id>\n");
+            }    
             break;
         case 3:
-            viewTreasure(argv[2], argv[3]);
+            if(argv[2] != NULL && argv[3] != NULL){
+                viewTreasure(argv[2], argv[3]);
+            }
+            else{
+                printf("Missing argument(s).\n");
+                printf("Try: --view <hunt_id> <id>\n");
+            } 
             break;
         case 4:
-            removeTreasure(argv[2], argv[3]);
+            if(argv[2] != NULL && argv[3] != NULL){
+                removeTreasure(argv[2], argv[3]);
+            }
+            else{
+                printf("Missing argument(s).\n");
+                printf("Try: --remove_treasure <hunt_id> <id>\n");
+            } 
             break;
         case 5:
-            printf("REMOVEF");
+            if(argv[2] != NULL){
+                removeHunt(argv[2]);
+            }
+            else{
+                printf("Missing argument(s).\n");
+                printf("Try: --remove_hunt <hunt_id>\n");
+            }  
             break;
         default :
             printf("Incorrect Option!\n");
@@ -38,7 +61,5 @@ int main(int argc, char **argv){
             printf("--remove_hunt <hunt_id> (remove an entire hunt)\n");
     }
 
-
-  
     return 0;
 }

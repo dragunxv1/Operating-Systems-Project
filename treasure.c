@@ -15,7 +15,7 @@ void clearInputBuffer() {
 }
 
 Treasure treasureRead(Treasure tres) {
-    char buffer[100];
+    char buffer[MAX];
 
     while(1){
         printf("ID: ");
@@ -24,7 +24,7 @@ Treasure treasureRead(Treasure tres) {
         printf("Invalid Input for ID - Integer Required\n");
     }
 
-    printf("User Name: ");
+    printf("UserName: ");
     fgets(tres.userName, treasureTXT, stdin);
     if (tres.userName[strlen(tres.userName) - 1] != '\n') {
         clearInputBuffer(); 
@@ -66,6 +66,10 @@ Treasure treasureRead(Treasure tres) {
 
 char* dataFilepath(char *hunt){
     char *filepath = (char*)calloc((strlen(hunt) + 20), sizeof(char));
+    if(filepath == NULL){
+        perror("Memory Alloc Error:");
+        exit(-1);
+    }
     strcat(filepath, hunt);
     strcat(filepath,"/");
     strcat(filepath,"data.bin");
@@ -74,6 +78,10 @@ char* dataFilepath(char *hunt){
 
 char* logFilepath(char *hunt){
     char *filepath = (char*)calloc((strlen(hunt) + 20), sizeof(char));
+    if(filepath == NULL){
+        perror("Memory Alloc Error:");
+        exit(-1);
+    }
     strcat(filepath, hunt);
     strcat(filepath,"/");
     strcat(filepath,"logged_hunt.txt");
@@ -88,7 +96,7 @@ void treasurePrint(Treasure x){
     printf("Coordinates: %.2f - %.2f\n\n", x.gps.x, x.gps.y);
 }
 
-int determineOperation(char *operation){
+int Operation(char *operation){
     if(strcmp(operation, "--add") == 0){
         return 1;
     }
@@ -127,7 +135,10 @@ void addTreasure(char *hunt){
     int bytesRead = 0;
     
     while(1){
-        lseek(dataFile, offset, SEEK_SET);
+        if(lseek(dataFile, offset, SEEK_SET) == -1){
+            perror("LSEEK ERROR:");
+            exit(-1);
+        }
         bytesRead = read(dataFile, &checkID, sizeof(int));
         if(bytesRead == 0){
             break;
@@ -140,12 +151,22 @@ void addTreasure(char *hunt){
         offset = offset + sizeof(Treasure);
     }
 
-    lseek(dataFile, 0, SEEK_END);
-    write(dataFile, &tr, sizeof(Treasure));
-    close(dataFile);
+    if(lseek(dataFile, 0, SEEK_END) == -1){
+        perror("LSEEK ERROR:");
+        exit(-1);
+    }
+    if(write(dataFile, &tr, sizeof(Treasure)) == -1){
+        perror("File write error:");
+        exit(-1);
+    }
+    if(close(dataFile) == -1){
+        perror("File close error:");
+        exit(-1);
+    }
+
     free(dataPath);
 
-    char message[100] = {0};
+    char message[MAX] = {0};
     sprintf(message,"  Treasure with ID %d was added.\n", tr.ID);
 
     addLog(hunt, message);
@@ -153,7 +174,7 @@ void addTreasure(char *hunt){
 
 void addLog(char *hunt, char *mess){
     char *logPath = logFilepath(hunt);
-    int logFile = open(logPath, O_RDWR | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
+    int logFile = open(logPath, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
     if(logFile == -1){
         perror("Log File Open Error:");
         close(logFile);
@@ -161,38 +182,58 @@ void addLog(char *hunt, char *mess){
         exit(-1);
     }
 
-    char log[100] = {0};
+    char log[MAX] = {0};
     time_t NOW = time(0);
     struct tm *time_info = localtime(&NOW);
     strftime(log, sizeof(log), "%Y-%m-%d %H:%M:%S", time_info);
 
-    char message[100] = {0};
-    strcpy(message, mess);
+    char message[MAX] = {0};
+    strncpy(message, mess, MAX);
 
-    write(logFile, &log, strlen(log));
-    write(logFile, &message, strlen(message));
+    if(write(logFile, &log, strlen(log)) == -1){
+        perror("File write error:");
+        exit(-1);
+    }
+    if(write(logFile, &message, strlen(message)) == -1){
+        perror("File write error:");
+        exit(-1);
+    }
 
-    close(logFile);
+    if(close(logFile) == -1){
+        perror("File close error:");
+        exit(-1);
+    }
+
+
     free(logPath);
 }
 
 char *lastLog(char *hunt){
     char *logPath = logFilepath(hunt);
-    int logFile = open(logPath, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    int logFile = open(logPath, O_RDONLY);
     if(logFile == -1){
         perror("Log File Open Error:");
         close(logFile);
         free(logPath);
         exit(-1);
     }
-
     int bytesRead = 0;
     char ch = 0;
     bytesRead = lseek(logFile, 0, SEEK_END);
+    if(bytesRead == -1){
+        perror("LSEEK Error:");
+        exit(-1);
+    }
 
     while(bytesRead >= 0){
-        lseek(logFile, bytesRead, SEEK_SET);
-        read(logFile, &ch, sizeof(char));
+        if(lseek(logFile, bytesRead, SEEK_SET) == -1){
+            perror("LSEEK Error:");
+            exit(-1);
+        }
+        if(read(logFile, &ch, sizeof(char)) == -1){
+            perror("File read error:");
+            exit(-1);
+        }
         if(ch == '\n'){
             break;
         }
@@ -200,28 +241,33 @@ char *lastLog(char *hunt){
     }
 
     char buf[MAX] = {0};
-    read(logFile, &buf, MAX);
+    if(read(logFile, &buf, MAX) == -1){
+        perror("File read error :");
+        exit(-1);
+    }
 
     char *last = (char*)malloc(strlen(buf)+1);
     if(last == NULL){
-        printf("malloc error");
+        perror("Memory alloc error :");
         exit(-1);
     }
     strcpy(last, buf);
     last[strlen(last)-1] = '\0';
 
+    if(close(logFile) == -1){
+        perror("File close error :");
+        exit(-1);
+    }
     free(logPath);
-    close(logFile);
-
     return last;
 }
 
 void listTreasures(char *hunt){
 
     char *dataPath = dataFilepath(hunt);
-    int dataFile = open(dataPath, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    int dataFile = open(dataPath, O_RDONLY);
     if(dataFile == -1){
-        perror("Data File Open Error:");
+        perror("Hunt not found :");
         close(dataFile);
         free(dataPath);
         exit(-1);
@@ -230,6 +276,10 @@ void listTreasures(char *hunt){
     Treasure tr = {0};
     int bytesRead = 0;
     bytesRead = lseek(dataFile, 0, SEEK_END);
+    if(bytesRead == -1){
+        perror("LSEEK Error :");
+        exit(-1);
+    }
 
     printf("HuntName: %s\n", hunt);
     printf("HuntSize: %d Bytes\n", bytesRead);
@@ -237,7 +287,10 @@ void listTreasures(char *hunt){
     char *log = lastLog(hunt);
     printf("LastLog: %s\n\n", log);
     
-    lseek(dataFile, 0, SEEK_SET);
+    if(lseek(dataFile, 0, SEEK_SET) == -1){
+        perror("LSEEK Error :");
+        exit(-1);
+    }
     while(1){
         
         bytesRead = read(dataFile, &tr.userName, sizeof(tr.userName));
@@ -253,11 +306,15 @@ void listTreasures(char *hunt){
         treasurePrint(tr);
     }
 
-    free(dataPath);
-    close(dataFile);
-    free(log);
 
-    char message[100] = {0};
+    if(close(dataFile) == -1){
+        perror("File close error :");
+        exit(-1);
+    }
+    free(log);
+    free(dataPath);
+
+    char message[MAX] = {0};
     sprintf(message,"  All treasures were listed\n");
 
     addLog(hunt, message);
@@ -265,9 +322,9 @@ void listTreasures(char *hunt){
 
 void viewTreasure(char *hunt, char *treasure){
     char *dataPath = dataFilepath(hunt);
-    int dataFile = open(dataPath, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    int dataFile = open(dataPath, O_RDONLY);
     if(dataFile == -1){
-        perror("Data File Open Error:");
+        perror("Hunt not found :");
         close(dataFile);
         free(dataPath);
         exit(-1);
@@ -285,7 +342,10 @@ void viewTreasure(char *hunt, char *treasure){
     off_t offsecond = offset;
 
     while(1){
-        lseek(dataFile, offset, SEEK_SET);
+        if(lseek(dataFile, offset, SEEK_SET) == -1){
+            perror("LSEEK Error :");
+            exit(-1);
+        }
         bytesRead = read(dataFile, &tresID, sizeof(int));
         if(bytesRead == 0){
             printf("HuntName: %s\n", hunt);
@@ -296,7 +356,10 @@ void viewTreasure(char *hunt, char *treasure){
         }
 
         if(ID == tresID){
-            lseek(dataFile, offset-offsecond, SEEK_SET);
+            if(lseek(dataFile, offset-offsecond, SEEK_SET) == -1){
+                perror("LSEEK Error : ");
+                exit(-1);
+            }
             read(dataFile, &tr.userName, sizeof(tr.userName));
             read(dataFile, &tr.clue, sizeof(tr.clue));
             read(dataFile, &tr.gps.x, sizeof(float));
@@ -311,20 +374,25 @@ void viewTreasure(char *hunt, char *treasure){
     printf("HuntName: %s\n", hunt);
     treasurePrint(tr);
 
-    char message[100] = {0};
+    
+    if(close(dataFile) == -1){
+        perror("File close error :");
+        exit(-1);
+    }
+    free(dataPath);
+
+    char message[MAX] = {0};
     sprintf(message," HUNT %s : Treasure with ID %d was listed.\n", hunt, tr.ID);
 
     addLog(hunt, message);
-
-    free(dataPath);
-    close(dataFile);
 }
 
 void removeTreasure(char *hunt, char*treasure){
+
     char *dataPath = dataFilepath(hunt);
     int dataFile = open(dataPath, O_RDWR);
     if(dataFile == -1){
-        perror("Data File Open Error:");
+        perror("Hunt not found :");
         close(dataFile);
         free(dataPath);
         exit(-1);
@@ -341,7 +409,10 @@ void removeTreasure(char *hunt, char*treasure){
         index++;
     }
 
-    close(dataFile);
+    if(close(dataFile) == -1){
+        perror("File close error :");
+        exit(-1);
+    }
 
     dataFile = open(dataPath, O_RDWR | O_TRUNC);
     if(dataFile == -1){
@@ -356,7 +427,8 @@ void removeTreasure(char *hunt, char*treasure){
         printf("Invalid treasure ID\n");
         exit(-1);
     }
-    for(int i = 0; i<index; i++){
+    int i = 0;
+    for(i = 0; i<index; i++){
         if(list[i].ID == ID){
             for(int j = i; j<index; j++){
                 list[j] = list[j+1];
@@ -366,16 +438,66 @@ void removeTreasure(char *hunt, char*treasure){
         }
     }
 
-    lseek(dataFile, 0, SEEK_SET);
+    if(lseek(dataFile, 0, SEEK_SET) == -1){
+        perror("LSEEK Error :");
+        exit(-1);
+    }
     for(int i = 0; i<index; i++){
-        write(dataFile, &list[i], sizeof(Treasure));
+        if(write(dataFile, &list[i], sizeof(Treasure)) == -1){
+            perror("File write error :");
+            exit(-1);
+        }
     }
 
     free(dataPath);
-    close(dataFile);
+    if(close(dataFile) == -1){
+        perror("File close error :");
+        exit(-1);
+    }
 
     char message[100] = {0};
     sprintf(message,"  Treasure with ID %d was deleted.\n", ID);
 
     addLog(hunt, message);
+}
+
+void removeHunt(char *hunt){
+    DIR *directory = opendir(hunt);
+    if(directory == NULL){
+        perror("Opendir Error:");
+        exit(-1);
+    }
+
+    struct dirent *file;
+    char path[pathMAX];
+    struct stat statbuf;
+
+    while((file = readdir(directory)) != NULL){
+    
+        if(strcmp(file->d_name, ".") == 0 || strcmp(file->d_name,"..") == 0){
+            continue;
+        }
+
+        snprintf(path, sizeof(path), "%s/%s", hunt, file->d_name);
+
+        if(stat(path, &statbuf) != 0){
+            perror("Stat Error:");
+            continue;
+        }
+
+        if(S_ISDIR(statbuf.st_mode)){
+            removeHunt(path);
+        }else{
+            remove(path);
+        }
+    }
+
+    if(closedir(directory) == -1){
+        perror("Directory close error :");
+        exit(-1);
+    }
+    if(remove(hunt) == -1){
+        perror("File remove error :");
+        exit(-1);
+    }
 }

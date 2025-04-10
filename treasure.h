@@ -1,5 +1,6 @@
 #define treasureTXT 50
 #define MAX 100
+#define pathMAX 1000
 
 typedef struct GPS{
     float x;
@@ -15,7 +16,7 @@ typedef struct Treasure{
 }Treasure;
 
 void treasurePrint(Treasure x);
-int determineOperation(char *operation);
+int Operation(char *operation);
 char* dataFilepath(char *hunt);
 char* logFilepath(char *hunt);
 Treasure treasureRead(Treasure x);
@@ -24,3 +25,4 @@ void addLog(char *hunt, char *message);
 void listTreasures(char *hunt);
 void viewTreasure(char *hunt, char *treasure);
 void removeTreasure(char *hunt, char*treasure);
+void removeHunt(char *hunt);
