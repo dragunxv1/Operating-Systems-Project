@@ -1,2 +1,2 @@
 gcc -Wall -o treasure_manager treasure_manager.c treasure.c
-#valgrind ./treasure_manager --add game1
+./treasure_manager --view game1 213
