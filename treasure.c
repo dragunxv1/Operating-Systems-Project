@@ -86,8 +86,7 @@ Treasure treasureRead(Treasure tres) {
 char* dataFilepath(char *hunt){
     char buf[MAX] = {0};
     strncpy(buf,hunt, MAX-allocBUF);
-    strcat(buf, "/");
-    strcat(buf, "data.bin");
+    strcat(buf, "/data.bin");
 
     char *filepath = (char*)calloc(strlen(buf)+1, sizeof(char));
     if(filepath == NULL){
@@ -102,8 +101,7 @@ char* dataFilepath(char *hunt){
 char* logFilepath(char *hunt){
     char buf[MAX] = {0};
     strncpy(buf,hunt, MAX-allocBUF);
-    strcat(buf, "/");
-    strcat(buf, "logged_hunt.txt");
+    strcat(buf, "/logged_hunt.txt");
 
     char *filepath = (char*)calloc(strlen(buf)+1, sizeof(char));
     if(filepath == NULL){
