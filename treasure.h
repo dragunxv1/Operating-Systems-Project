@@ -16,14 +16,22 @@ typedef struct Treasure{
     int value;
 }Treasure;
 
-void treasurePrint(Treasure x);
-int Operation(char *operation);
+typedef enum{
+    ADD,
+    LIST,
+    VIEW,
+    REMOVE_TREASURE,
+    REMOVE_HUNT
+}Operation;
+
+void treasurePrint(Treasure *x);
+Operation parseOperation(char *argument);
 char* dataFilepath(char *hunt);
 char* logFilepath(char *hunt);
 Treasure treasureRead(Treasure x);
-void addTreasure(char *hunt);
-void addLog(char *hunt, char *message);
-void listTreasures(char *hunt);
-void viewTreasure(char *hunt, char *treasure);
-void removeTreasure(char *hunt, char*treasure);
-void removeHunt(char *hunt);
+int addTreasure(char *hunt);
+int addLog(char *hunt, char *message);
+int listTreasures(char *hunt);
+int viewTreasure(char *hunt, char *treasure);
+int removeTreasure(char *hunt, char*treasure);
+int removeHunt(char *hunt);
