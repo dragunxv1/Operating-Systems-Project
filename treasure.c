@@ -350,7 +350,7 @@ int listTreasures(char *hunt){
     
     if(lseek(dataFile, 0, SEEK_SET) == -1){
         perror("LSEEK Error :");
-        exit(-1);
+        return -1;
     }
     while(1){
         
