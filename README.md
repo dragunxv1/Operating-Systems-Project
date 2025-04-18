@@ -1,5 +1,7 @@
 ## **SO/SO1/OS Project Description**
 
+*updated with Phase 2*
+
 Build a C program in the UNIX environment simulating a treasure hunt game system that allows users to create, manage, and participate in digital treasure hunts. The system will use files to store treasure clues and locations, manage game state through processes and signals, and facilitate interaction between different components through pipes and redirects.
 
 Each phase builds upon the previous one. You must present your program at each phase. Not implementing a phase disqualifies the entire project and the student will not get a passing grade.
@@ -53,10 +55,37 @@ Example of command line:
 ### **Hints for Phase 1:**
 
 * Distinct hunts are stored in distinct directories. Note that there is no command for listing all the hunts, therefore you can implement the requirements without parsing directory structures  
-* Formats for Hunt IDs, and IDs in general, are mainly at your own choice. You can use, for example, as a Hunt ID the name of the directory, or a part of it that is unique (e.g., Hunt001, Hunt002, etc.)
+* Formats for Hunt IDs, and IDs in general, are mainly at your own choice. You can use, for example, as a Hunt ID the name of the directory, or a part of it that is unique (e.g., Hunt001, Hunt002, etc.)  
+    
+    
+  
+
+
+## **Phase 2: Processes & Signals (Weeks 8-9)**
+
+**Goal:** Extend the treasure hunt system to use multiple processes and basic signal-based communication.
+
+### **Requirements:**
+
+Write an additional program, called `treasure_hub` that presents a simple interactive interface for the user. The program understands the following commands given interactively:
+
+* *start\_monitor:* starts a separate background process that monitors the hunts and prints to the standard output information about them when asked to  
+* *list\_hunts*: asks the monitor to list the hunts and the total number of treasures in each  
+* *list\_treasures:* tells the monitor to show the information about all treasures in a hunt, the same way as the command line at the previous stage did  
+* *view\_treasure:* tells the monitor to show the information about a treasure in hunt, the same way as the command line at the previous stage did  
+* *stop\_monitor:* asks the monitor to end then returns to the prompt. Prints monitor's  termination state when it ends.  
+* *exit:* if the monitor still runs, prints an error message, otherwise ends the program
+
+If the *stop\_monitor* command was given, any user attempts to input commands will end up with an error message until the monitor process actually ends. To test this feature, the monitor program will delay its exit (*usleep()*) when it responds. The communication with the monitor process is done using signals.
+
+Note: For setting up signal behaviour, you must use *sigaction()*, not *signal()*.
+
+### **Deliverables for Phase 2:**
+
+* A working `treasure_hub` program following all specifications above, and the `treasure_manager`, updated if needed.
 
 ### **Rules for submitting the system programming lab assignments:**
 
 * each student must have a git repository and weekly commits  
-* each phase will end with a mandatory code submission in a special Milestone assignment on Campus Virtual (a phase is two weeks, as noted above)  
+* each phase will end with a mandatory code submission in a special Milestone assignment on Campus Virtual (a phase is two weeks, as noted above). All submitted programs must work as required by the above specification  
 * failing to submit work for any of the phases **will void the entire project** (grade 2 at the lab for the project) (This means if you don't submit all phases you fail the project)
