@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "treasure.h"
+#include "manager.h"
 
 int main(int argc, char **argv){
     if(argc < 2){
