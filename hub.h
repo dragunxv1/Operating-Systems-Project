@@ -12,7 +12,7 @@ typedef enum {
 void displayMenu();
 int listHunts();
 int startMonitor();
-int listTreasures();
-int viewTreasure();
+int listTreasures2();
+int viewTreasure2();
 int stopMonitor();
 int closeProgram();

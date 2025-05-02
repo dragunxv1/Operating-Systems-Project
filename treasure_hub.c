@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "hub.h"
@@ -17,7 +18,6 @@ int main(void) {
       return -1;
     }
     getchar();
-
     comm = x;
 
     switch (comm) {
@@ -28,10 +28,10 @@ int main(void) {
         listHunts();
         break;
       case list_treasures:
-        listTreasures();
+        listTreasures2();
         break;
       case view_treasures:
-        viewTreasure();
+        viewTreasure2();
         break;
       case stop_monitor:
         stopMonitor();
@@ -42,6 +42,7 @@ int main(void) {
         }
         break;
       default:
+        system("clear");
         printf("Incorrect Command. Try again.\n");
     }
   }
