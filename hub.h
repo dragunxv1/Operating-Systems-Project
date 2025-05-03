@@ -1,4 +1,4 @@
-
+#define MAX 100
 
 typedef enum {
   start_monitor = 1,

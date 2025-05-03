@@ -17,8 +17,8 @@ pid_t monitorID = -1;
 int monitorStatus = 0;
 
 char *askForInput() {
-  char buff[50];
-  fgets(buff, 50, stdin);
+  char buff[MAX];
+  fgets(buff, MAX, stdin);
 
   char *input = (char *)malloc(strlen(buff) + 1);
   if (input == NULL) {
@@ -77,7 +77,7 @@ void huntLIST() {
     if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
       continue;
 
-    char fullPath[1024];
+    char fullPath[3*MAX];
     snprintf(fullPath, sizeof(fullPath), "%s/%s", ".", entry->d_name);
 
     struct stat statbuf;
@@ -89,7 +89,7 @@ void huntLIST() {
       printf("Number of Treasures: %d\n", getNumberOfHunts(entry->d_name));
     }
   }
-
+  printf("\n");
   closedir(directory);
 }
 
@@ -107,12 +107,15 @@ void signalHandler(int signal) {
     kill(getppid(), SIGSTOP);
     printf("LIST TREASURES\n");
 
-    char command[100];
+    char command[MAX];
     printf("Type HUNT name:");
+
     char *hunt = askForInput();
+    printf("\n");
     sprintf(command, "./treasure_manager --list %s", hunt);
     system(command);
 
+    printf("\n");
     kill(getppid(), SIGCONT);
     displayMenu();
     free(hunt);
@@ -122,7 +125,7 @@ void signalHandler(int signal) {
     kill(getppid(), SIGSTOP);
     printf("VIEW TREASURES\n");
 
-    char command[100];
+    char command[MAX];
     printf("Type HUNT name:");
     char *hunt = askForInput();
     hunt[strcspn(hunt, "\n")] = '\0';
@@ -133,10 +136,11 @@ void signalHandler(int signal) {
     }
     getchar();
 
+    printf("\n");
     sprintf(command, "./treasure_manager --view %s %d", hunt, tresID);
-    printf("%s\n", command);
     system(command);
 
+    printf("\n");
     kill(getppid(), SIGCONT);
     displayMenu();
     free(hunt);
@@ -230,7 +234,9 @@ int stopMonitor() {
     perror("Signal not sent :");
     return -1;
   }
-  waitpid(monitorID, NULL, 0);
+  int status = 0;
+  waitpid(monitorID, &status, 0);
+  printf("Monitor ended with status %d\n", WEXITSTATUS(status));
   monitorStatus = 0;
   return 0;
 }
