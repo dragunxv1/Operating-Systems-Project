@@ -36,6 +36,9 @@ int main(void) {
       case stop_monitor:
         stopMonitor();
         break;
+      case calculate_score:
+        calculateScore();
+        break;
       case exit_program:
         if (closeProgram() == 0) {
           return 0;

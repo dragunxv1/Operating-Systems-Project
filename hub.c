@@ -17,8 +17,8 @@ pid_t monitorID = -1;
 int monitorStatus = 0;
 
 char *askForInput() {
-  char buff[MAX];
-  fgets(buff, MAX, stdin);
+  char buff[MAX/2];
+  fgets(buff, MAX/2, stdin);
 
   char *input = (char *)malloc(strlen(buff) + 1);
   if (input == NULL) {
@@ -36,7 +36,14 @@ void displayMenu() {
   printf("3) List Treasures.\n");
   printf("4) View Treasure.\n");
   printf("5) Stop Monitor.\n");
+  printf("6) Calculate Score.\n");
   printf("0) EXIT.\n");
+}
+
+int calculateScore(){
+  system("clear");
+  printf("SCORE:\n");
+  return 0;
 }
 
 int getNumberOfHunts(char *hunt) {
@@ -73,14 +80,15 @@ void huntLIST() {
     return;
   }
 
+  char fullPath[3*MAX];
+  struct stat statbuf;
+
   while ((entry = readdir(directory))) {
     if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
       continue;
 
-    char fullPath[3*MAX];
     snprintf(fullPath, sizeof(fullPath), "%s/%s", ".", entry->d_name);
 
-    struct stat statbuf;
     if (stat(fullPath, &statbuf) == 0 && S_ISDIR(statbuf.st_mode)) {
       if (strcmp(entry->d_name, ".git") == 0) {
         continue;
