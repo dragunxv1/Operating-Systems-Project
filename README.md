@@ -1,6 +1,6 @@
 ## **SO/SO1/OS Project Description**
 
-*updated with Phase 2*
+*updated with Phase 2, and with Phase 2 hints*
 
 Build a C program in the UNIX environment simulating a treasure hunt game system that allows users to create, manage, and participate in digital treasure hunts. The system will use files to store treasure clues and locations, manage game state through processes and signals, and facilitate interaction between different components through pipes and redirects.
 
@@ -84,8 +84,34 @@ Note: For setting up signal behaviour, you must use *sigaction()*, not *signal()
 
 * A working `treasure_hub` program following all specifications above, and the `treasure_manager`, updated if needed.
 
+### **Hints for Phase 2:**
+
+* When a command is given, you can send a signal to the monitor (*e.g.,* SIGUSR1)  
+* You can use files to communicate the command details to the monitor process  
+* You can detect when the monitor ends by using SIGCHLD
+
+## **Phase 3: Pipes, Redirects & External Integration (Weeks 10-11)**
+
+**Goal:** Complete the treasure hunt system with inter-process communication and external tool integration.
+
+### **Requirements:**
+
+Enhance the system with the following:
+
+* The monitor process does not directly print the results anymore, instead it sends them back to the main process through a pipe  
+* Add a command to the interactive user interface called *calculate\_score*. The command creates a process for each existing hunt that calculates and outputs the scores of users in that hunt. A score is the sum of the values of all items owned by a user. The program that calculates scores is external, is made by you, can be written in C or as a script, and its output is retrieved using a pipe by a process in the `treasure_hub` system (the main one or another, depending on the chosen implementation).
+
+### **Deliverables for Phase 3:**
+
+* The updated `treasure_hub` program  
+* The program that calculates scores  
+* The `treasure_manager` updated if needed.
+
+Important: for each phase, you must commit your work to the Git repository and present it at the lab, until the end of that phase, not later. Failing to submit and present any of the phases will disqualify the entire work.
+
 ### **Rules for submitting the system programming lab assignments:**
 
 * each student must have a git repository and weekly commits  
 * each phase will end with a mandatory code submission in a special Milestone assignment on Campus Virtual (a phase is two weeks, as noted above). All submitted programs must work as required by the above specification  
 * failing to submit work for any of the phases **will void the entire project** (grade 2 at the lab for the project) (This means if you don't submit all phases you fail the project)
+
