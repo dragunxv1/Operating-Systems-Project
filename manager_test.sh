@@ -150,9 +150,9 @@ ls -d */
 echo "________________________________________________________________________________"
 echo "DELETING 2 HUNTS AND LISTING HUNTS"
 echo "________________________________________________________________________________"
-./treasure_manager --remove_hunt game10
-./treasure_manager --remove_hunt game12
+#./treasure_manager --remove_hunt game10
+#./treasure_manager --remove_hunt game12
 ls -d */
-./treasure_manager --remove_hunt game11
+#./treasure_manager --remove_hunt game11
 
 

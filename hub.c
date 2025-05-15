@@ -13,12 +13,19 @@
 
 #include "manager.h"
 
+int status = 0;
 pid_t monitorID = -1;
 int monitorStatus = 0;
 
+int pipefd[2];
+char buffer[MAX * MAX];
+char cleanBuffer[MAX * MAX] = {0};
+int savedSTDOUT = 0;
+FILE *stream = NULL;
+
 char *askForInput() {
-  char buff[MAX/2];
-  fgets(buff, MAX/2, stdin);
+  char buff[MAX / 2];
+  fgets(buff, MAX / 2, stdin);
 
   char *input = (char *)malloc(strlen(buff) + 1);
   if (input == NULL) {
@@ -27,23 +34,6 @@ char *askForInput() {
   }
   strcpy(input, buff);
   return input;
-}
-
-void displayMenu() {
-  printf("Choose a command:\n");
-  printf("1) Start Monitor.\n");
-  printf("2) List Hunts.\n");
-  printf("3) List Treasures.\n");
-  printf("4) View Treasure.\n");
-  printf("5) Stop Monitor.\n");
-  printf("6) Calculate Score.\n");
-  printf("0) EXIT.\n");
-}
-
-int calculateScore(){
-  system("clear");
-  printf("SCORE:\n");
-  return 0;
 }
 
 int getNumberOfHunts(char *hunt) {
@@ -80,7 +70,7 @@ void huntLIST() {
     return;
   }
 
-  char fullPath[3*MAX];
+  char fullPath[3 * MAX];
   struct stat statbuf;
 
   while ((entry = readdir(directory))) {
@@ -101,14 +91,30 @@ void huntLIST() {
   closedir(directory);
 }
 
-void signalHandler(int signal) {
+void mainSignalHandler(int signal) {
+  if (signal == SIGUSR1) {
+    memset(buffer, 0, sizeof(buffer));
+    read(pipefd[0], buffer, sizeof(buffer));
+    printf("%s", buffer);
+  }
+}
+
+void monitorSignalHandler(int signal) {
+  kill(getppid(), SIGCONT);
   if (signal == SIGUSR1) {
     system("clear");
     kill(getppid(), SIGSTOP);
     printf("LIST HUNTS\n");
+
+    savedSTDOUT = dup(STDOUT_FILENO);
+    dup2(pipefd[1], STDOUT_FILENO);
     huntLIST(".");
+    dup2(savedSTDOUT, STDOUT_FILENO);
+
     kill(getppid(), SIGCONT);
-    displayMenu();
+    kill(getppid(), SIGUSR1);
+
+    printf("\n");
 
   } else if (signal == SIGUSR2) {
     system("clear");
@@ -119,14 +125,21 @@ void signalHandler(int signal) {
     printf("Type HUNT name:");
 
     char *hunt = askForInput();
-    printf("\n");
-    sprintf(command, "./treasure_manager --list %s", hunt);
-    system(command);
+    hunt[strcspn(hunt, "\n")] = '\0';
 
     printf("\n");
-    kill(getppid(), SIGCONT);
-    displayMenu();
+    sprintf(command, "./treasure_manager --list %s", hunt);
     free(hunt);
+
+    savedSTDOUT = dup(STDOUT_FILENO);
+    dup2(pipefd[1], STDOUT_FILENO);
+    system(command);
+    dup2(savedSTDOUT, STDOUT_FILENO);
+
+    kill(getppid(), SIGCONT);
+    kill(getppid(), SIGUSR1);
+
+    printf("\n");
 
   } else if (signal == SIGINT) {
     system("clear");
@@ -146,16 +159,23 @@ void signalHandler(int signal) {
 
     printf("\n");
     sprintf(command, "./treasure_manager --view %s %d", hunt, tresID);
+    free(hunt);
+
+    savedSTDOUT = dup(STDOUT_FILENO);
+    dup2(pipefd[1], STDOUT_FILENO);
     system(command);
+    dup2(savedSTDOUT, STDOUT_FILENO);
+
+    kill(getppid(), SIGCONT);
+    kill(getppid(), SIGUSR1);
 
     printf("\n");
-    kill(getppid(), SIGCONT);
-    displayMenu();
-    free(hunt);
 
   } else if (signal == SIGTERM) {
     system("clear");
     printf("TERMINATING MONITOR\n");
+    kill(getppid(), SIGCONT);
+    close(pipefd[1]);
     _exit(0);
   }
 }
@@ -167,19 +187,32 @@ int startMonitor() {
     return -1;
   }
 
+  struct sigaction sa = {0};
+  sa.sa_handler = mainSignalHandler;
+
+  sigaction(SIGUSR1, &sa, NULL);
+
+  if (pipe(pipefd) == -1) {
+    perror("Pipe creation error :");
+    return -1;
+  }
+
   monitorID = fork();
   if (monitorID < 0) {
     perror("Monitor did not start :");
     return -1;
   }
+
   if (monitorID == 0) {
     struct sigaction sa = {0};
-    sa.sa_handler = signalHandler;
+    sa.sa_handler = monitorSignalHandler;
 
     sigaction(SIGUSR1, &sa, NULL);
     sigaction(SIGUSR2, &sa, NULL);
     sigaction(SIGINT, &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
+
+    close(pipefd[0]);
 
     while (1) {
       pause();
@@ -189,6 +222,8 @@ int startMonitor() {
     monitorStatus = 1;
     system("clear");
     printf("Monitor Started Successfully.\n");
+    close(pipefd[1]);
+    stream = fdopen(pipefd[0], "r");
   }
   return 0;
 }
@@ -203,6 +238,7 @@ int listHunts() {
     perror("Signal not sent :");
     return -1;
   }
+  pause();
   return 0;
 }
 
@@ -216,6 +252,7 @@ int listTreasures2() {
     perror("Signal not sent :");
     return -1;
   }
+  pause();
   return 0;
 }
 
@@ -229,6 +266,7 @@ int viewTreasure2() {
     perror("Signal not sent :");
     return -1;
   }
+  pause();
   return 0;
 }
 
@@ -242,10 +280,10 @@ int stopMonitor() {
     perror("Signal not sent :");
     return -1;
   }
-  int status = 0;
+
+  monitorStatus = 0;
   waitpid(monitorID, &status, 0);
   printf("Monitor ended with status %d\n", WEXITSTATUS(status));
-  monitorStatus = 0;
   return 0;
 }
 
@@ -255,5 +293,13 @@ int closeProgram() {
     printf("Program cannot exit while monitor is still running.\n");
     return -1;
   }
+  fclose(stream);
+  close(pipefd[0]);
+  return 0;
+}
+
+int calculateScore() {
+  system("clear");
+  printf("SCORE:\n");
   return 0;
 }

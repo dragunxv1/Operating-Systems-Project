@@ -10,7 +10,7 @@ typedef enum {
   exit_program = 0
 } COMMAND;
 
-void displayMenu();
+int displayMenu();
 int calculateScore();
 int listHunts();
 int startMonitor();

@@ -6,19 +6,26 @@
 
 #include "hub.h"
 
-int main(void) {
-  int x = 0;
-  COMMAND comm = 0;
+int option = 0;
+COMMAND comm = 0;
 
+int displayMenu() {
   while (1) {
-    displayMenu();
+    printf("Choose a command:\n");
+    printf("1) Start Monitor.\n");
+    printf("2) List Hunts.\n");
+    printf("3) List Treasures.\n");
+    printf("4) View Treasure.\n");
+    printf("5) Stop Monitor.\n");
+    printf("6) Calculate Score.\n");
+    printf("0) EXIT.\n");
 
-    if (scanf("%d", &x) != 1) {
+    if (scanf("%d", &option) != 1) {
       perror("Menu Scanf :");
       return -1;
     }
     getchar();
-    comm = x;
+    comm = option;
 
     switch (comm) {
       case start_monitor:
@@ -49,6 +56,10 @@ int main(void) {
         printf("Incorrect Command. Try again.\n");
     }
   }
+}
+
+int main(void) {
+  displayMenu();
 
   return 0;
 }
