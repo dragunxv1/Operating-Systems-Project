@@ -215,11 +215,13 @@ int addTreasure(char *hunt) {
     if (bytesRead == 0) {
       break;
     }
+
     if (strcmp(tr.userName, checkName) == 0) {
       printf("A treasure with this UserName already exists.\n");
       tr = treasureRead(tr);
       continue;
     }
+
     offset = offset + sizeof(Treasure);
   }
 
@@ -348,8 +350,7 @@ int listTreasures(char *hunt) {
     return -1;
   }
   while (1) {
-    bytesRead = read(dataFile, &tr, sizeof(tr));
-    if (bytesRead != sizeof(tr)) {
+    if (read(dataFile, &tr, sizeof(tr)) != sizeof(tr)) {
       break;
     }
     treasurePrint(&tr);

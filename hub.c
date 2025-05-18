@@ -21,7 +21,6 @@ int pipefd[2];
 char buffer[MAX * MAX];
 char cleanBuffer[MAX * MAX] = {0};
 int savedSTDOUT = 0;
-FILE *stream = NULL;
 
 char *askForInput() {
   char buff[MAX / 2];
@@ -66,7 +65,7 @@ void huntLIST() {
   DIR *directory = opendir(".");
 
   if (directory == NULL) {
-    perror("opendir");
+    perror("OPENDIR ERROR :");
     return;
   }
 
@@ -94,8 +93,11 @@ void huntLIST() {
 void mainSignalHandler(int signal) {
   if (signal == SIGUSR1) {
     memset(buffer, 0, sizeof(buffer));
-    read(pipefd[0], buffer, sizeof(buffer));
-    printf("%s", buffer);
+    if (read(pipefd[0], buffer, sizeof(buffer)) == -1) {
+      printf("mainSignalHandler read error.");
+      return;
+    }
+    printf("%s\n", buffer);
   }
 }
 
@@ -103,7 +105,6 @@ void monitorSignalHandler(int signal) {
   kill(getppid(), SIGCONT);
   if (signal == SIGUSR1) {
     system("clear");
-    kill(getppid(), SIGSTOP);
     printf("LIST HUNTS\n");
 
     savedSTDOUT = dup(STDOUT_FILENO);
@@ -111,14 +112,12 @@ void monitorSignalHandler(int signal) {
     huntLIST(".");
     dup2(savedSTDOUT, STDOUT_FILENO);
 
-    kill(getppid(), SIGCONT);
     kill(getppid(), SIGUSR1);
 
     printf("\n");
 
   } else if (signal == SIGUSR2) {
     system("clear");
-    kill(getppid(), SIGSTOP);
     printf("LIST TREASURES\n");
 
     char command[MAX];
@@ -136,14 +135,12 @@ void monitorSignalHandler(int signal) {
     system(command);
     dup2(savedSTDOUT, STDOUT_FILENO);
 
-    kill(getppid(), SIGCONT);
     kill(getppid(), SIGUSR1);
 
     printf("\n");
 
   } else if (signal == SIGINT) {
     system("clear");
-    kill(getppid(), SIGSTOP);
     printf("VIEW TREASURES\n");
 
     char command[MAX];
@@ -166,7 +163,6 @@ void monitorSignalHandler(int signal) {
     system(command);
     dup2(savedSTDOUT, STDOUT_FILENO);
 
-    kill(getppid(), SIGCONT);
     kill(getppid(), SIGUSR1);
 
     printf("\n");
@@ -223,7 +219,6 @@ int startMonitor() {
     system("clear");
     printf("Monitor Started Successfully.\n");
     close(pipefd[1]);
-    stream = fdopen(pipefd[0], "r");
   }
   return 0;
 }
@@ -280,7 +275,7 @@ int stopMonitor() {
     perror("Signal not sent :");
     return -1;
   }
-
+  close(pipefd[0]);
   monitorStatus = 0;
   waitpid(monitorID, &status, 0);
   printf("Monitor ended with status %d\n", WEXITSTATUS(status));
@@ -293,13 +288,73 @@ int closeProgram() {
     printf("Program cannot exit while monitor is still running.\n");
     return -1;
   }
-  fclose(stream);
-  close(pipefd[0]);
+
   return 0;
 }
 
 int calculateScore() {
   system("clear");
-  printf("SCORE:\n");
+
+  struct dirent *entry;
+  DIR *directory = opendir(".");
+
+  if (directory == NULL) {
+    perror("OPENDIR ERROR :");
+    return -1;
+  }
+
+  char directoryList[MAX][MAX] = {0};
+  int directoryCounter = 0;
+  char fullPath[3 * MAX] = {0};
+  char command[3 * MAX] = {0};
+  struct stat statbuf;
+  int processPipe[2] = {0};
+
+  if (pipe(processPipe) == -1) {
+    perror("Pipe Creation Failed :");
+    return -1;
+  }
+
+  while ((entry = readdir(directory))) {
+    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+      continue;
+
+    snprintf(fullPath, sizeof(fullPath), "%s/%s", ".", entry->d_name);
+
+    if (stat(fullPath, &statbuf) == 0 && S_ISDIR(statbuf.st_mode)) {
+      if (strcmp(entry->d_name, ".git") == 0) {
+        continue;
+      }
+      strcpy(directoryList[directoryCounter++], entry->d_name);
+    }
+  }
+
+  closedir(directory);
+
+  for (int i = 0; i < directoryCounter; i++) {
+    pid_t pid = fork();
+    if (pid == 0) {
+      close(processPipe[0]);
+
+      memset(command, 0, sizeof(command));
+      sprintf(command, "./calculate_score %s", directoryList[i]);
+
+      dup2(processPipe[1], STDOUT_FILENO);
+      close(processPipe[1]);
+      system(command);
+
+      exit(0);
+    }
+  }
+
+  for (int i = 0; i < directoryCounter; i++) {
+    wait(NULL);
+  }
+
+  char buffer[MAX * MAX] = {0};
+  read(processPipe[0], buffer, sizeof(buffer) - 1);
+  printf("%s", buffer);
+
+  printf("\n");
   return 0;
 }
