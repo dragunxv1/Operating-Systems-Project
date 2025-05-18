@@ -31,7 +31,7 @@ void clearInputBuffer() {
 }
 
 Treasure treasureRead(Treasure tres) {
-  char buffer[MAX];
+  char buffer[MAX] = {0};
 
   while (1) {
     printf("ID: ");
@@ -168,7 +168,7 @@ int addLog(char *hunt, char *mess) {
     return -1;
   }
 
-  struct stat buff;
+  struct stat buff = {0};
   char *logLink = linkPath(hunt);
 
   if (stat(logLink, &buff) != 0) {
@@ -265,7 +265,7 @@ char *lastLog(char *hunt) {
 
   char ch = 0;
 
-  struct stat statbuf;
+  struct stat statbuf = {0};
   stat(logPath, &statbuf);
   free(logPath);
   int fileSize = statbuf.st_size;
@@ -448,7 +448,7 @@ int removeTreasure(char *hunt, char *treasure) {
     return -1;
   }
 
-  Treasure list[MAX];
+  Treasure list[MAX] = {0};
   int index = 0;
   int x = 0;
   while (1) {
@@ -524,8 +524,8 @@ int removeHunt(char *hunt) {
   }
 
   struct dirent *file;
-  char path[pathMAX];
-  struct stat statbuf;
+  char path[pathMAX] = {0};
+  struct stat statbuf = {0};
 
   while ((file = readdir(directory)) != NULL) {
     if (strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0) {
